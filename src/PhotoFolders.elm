@@ -10,9 +10,18 @@ import Json.Decode as Decode exposing (Decoder, int, list, string)
 import Json.Decode.Pipeline exposing (required)
 
 
+type Folder
+    = Folder
+        { name : String
+        , photoUrls : List String
+        , subfolders : List Folder
+        }
+
+
 type alias Model =
     { selectedPhotoUrl : Maybe String
     , photos : Dict String Photo
+    , root : Folder
     }
 
 
@@ -28,6 +37,21 @@ initialModel : Model
 initialModel =
     { selectedPhotoUrl = Nothing
     , photos = Dict.empty
+    , root =
+        Folder
+            { name = "Photos"
+            , photoUrls = []
+            , subfolders =
+                [ Folder
+                    { name = "2016"
+                    , photoUrls = [ "trevi", "coli" ]
+                    , subfolders =
+                        [ Folder { name = "outdoors", photoUrls = [], subfolders = [] }
+                        , Folder { name = "indoors", photoUrls = [ "fresco" ], subfolders = [] }
+                        ]
+                    }
+                ]
+            }
     }
 
 
@@ -80,6 +104,18 @@ viewRelatedPhoto url =
         []
 
 
+viewFolder : Folder -> Html Msg
+viewFolder (Folder folder) =
+    let
+        subfolders =
+            List.map viewFolder folder.subfolders
+    in
+    div [ class "folder" ]
+        [ label [] [ text folder.name ]
+        , div [ class "subfolders" ] subfolders
+        ]
+
+
 urlPrefix : String
 urlPrefix =
     "http://elm-in-action.com/"
@@ -101,7 +137,13 @@ view model =
                 Nothing ->
                     text ""
     in
-    div [ class "content" ] [ div [ class "selected-photo" ] [ selectedPhoto ] ]
+    div [ class "content" ]
+        [ div [ class "folders" ]
+            [ h1 [] [ text "Folders" ]
+            , viewFolder model.root
+            ]
+        , div [ class "selected-photo" ] [ selectedPhoto ]
+        ]
 
 
 modelDecoder : Decoder Model
@@ -132,6 +174,29 @@ modelDecoder =
                     }
                   )
                 ]
+        , root =
+            Folder
+                { name = "Photos"
+                , photoUrls = []
+                , subfolders =
+                    [ Folder
+                        { name = "2016"
+                        , photoUrls = [ "trevi", "coli" ]
+                        , subfolders =
+                            [ Folder { name = "outdoors", photoUrls = [], subfolders = [] }
+                            , Folder { name = "indoors", photoUrls = [ "fresco" ], subfolders = [] }
+                            ]
+                        }
+                    , Folder
+                        { name = "2017"
+                        , photoUrls = []
+                        , subfolders =
+                            [ Folder { name = "outdoors", photoUrls = [], subfolders = [] }
+                            , Folder { name = "indoors", photoUrls = [], subfolders = [] }
+                            ]
+                        }
+                    ]
+                }
         }
 
 
