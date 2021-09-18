@@ -1,59 +1,58 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-    <head>
-        <link rel="stylesheet" href="http://elm-in-action.com/styles.css">
-        <link rel="stylesheet" href="http://elm-in-action.com/range-slider.css">
-        <script src="http://elm-in-action.com/range-slider.js"></script>
-        <script>
-            class RangeSlider extends HTMLElement {
-                connectedCallback() {
-                    var input = document.createElement("input");
-                    this.appendChild(input);
+  <head>
+    <link rel="stylesheet" href="http://elm-in-action.com/styles.css" />
+    <link rel="stylesheet" href="http://elm-in-action.com/range-slider.css" />
+    <script src="http://elm-in-action.com/range-slider.js"></script>
+    <script>
+      class RangeSlider extends HTMLElement {
+        connectedCallback() {
+          var input = document.createElement("input");
+          this.appendChild(input);
 
-                    var jsr = new JSR(input, {
-                        max: this.max,
-                        values: [this.val],
-                        sliders: 1,
-                        grid: false
-                    });
-                    var rangeSliderNode = this;
+          var jsr = new JSR(input, {
+            max: this.max,
+            values: [this.val],
+            sliders: 1,
+            grid: false,
+          });
+          var rangeSliderNode = this;
 
-                    jsr.addEventListener("update", function(elem, value) {
-                        var event = new CustomEvent("slide", {
-                            detail: {userSlidTo: value}
-                        });
-
-                        rangeSliderNode.dispatchEvent(event);
-                    });
-                }
-            }
-
-            window.customElements.define("range-slider", RangeSlider);
-        </script>
-    </head>
-
-    <body>
-        <div id="app"></div>
-
-        <script src="http://elm-in-action.com/pasta.js"></script>
-        <script src="elm.js"></script>
-        <script>
-            var app = Elm.PhotoGroove.init({
-              node: document.getElementById("app"),
-              flags: Pasta.version
+          jsr.addEventListener("update", function (elem, value) {
+            var event = new CustomEvent("slide", {
+              detail: { userSlidTo: value },
             });
 
-            app.ports.setFilters.subscribe(function(options) {
-                requestAnimationFrame(function() {
-                    Pasta.apply(document.getElementById("main-canvas"), options);
-                });
-            });
+            rangeSliderNode.dispatchEvent(event);
+          });
+        }
+      }
 
-            Pasta.addActivityListener(function(activity) {
-                console.log("Got some activity to send to Elm:", activity);
-                app.ports.activityChanges.send(activity);
-            });
-        </script>
-    </body>
+      window.customElements.define("range-slider", RangeSlider);
+    </script>
+  </head>
+
+  <body>
+    <div id="app"></div>
+
+    <script src="http://elm-in-action.com/pasta.js"></script>
+    <script src="elm.js"></script>
+    <script>
+      const app = Elm.PhotoFolders.init({
+        node: document.getElementById("app"),
+        flags: Pasta.version,
+      });
+
+      // app.ports.setFilters.subscribe(function(options) {
+      //     requestAnimationFrame(function() {
+      //         Pasta.apply(document.getElementById("main-canvas"), options);
+      //     });
+      // });
+
+      // Pasta.addActivityListener(function(activity) {
+      //     console.log("Got some activity to send to Elm:", activity);
+      //     app.ports.activityChanges.send(activity);
+      // });
+    </script>
+  </body>
 </html>
-
