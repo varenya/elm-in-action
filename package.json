@@ -1,0 +1,25 @@
+{
+  "name": "elm-in-action",
+  "version": "1.0.0",
+  "description": "",
+  "main": "elm.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/varenya/elm-in-action.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/varenya/elm-in-action/issues"
+  },
+  "homepage": "https://github.com/varenya/elm-in-action#readme",
+  "devDependencies": {
+    "uglify-js": "^3.14.2"
+  }
+}

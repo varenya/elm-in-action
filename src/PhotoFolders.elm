@@ -15,6 +15,7 @@ type Folder
         { name : String
         , photoUrls : List String
         , subfolders : List Folder
+        , expanded : Bool
         }
 
 
@@ -40,14 +41,16 @@ initialModel =
     , root =
         Folder
             { name = "Photos"
+            , expanded = True
             , photoUrls = []
             , subfolders =
                 [ Folder
                     { name = "2016"
+                    , expanded = True
                     , photoUrls = [ "trevi", "coli" ]
                     , subfolders =
-                        [ Folder { name = "outdoors", photoUrls = [], subfolders = [] }
-                        , Folder { name = "indoors", photoUrls = [ "fresco" ], subfolders = [] }
+                        [ Folder { name = "outdoors", expanded = True, photoUrls = [], subfolders = [] }
+                        , Folder { name = "indoors", expanded = True, photoUrls = [ "fresco" ], subfolders = [] }
                         ]
                     }
                 ]
@@ -68,11 +71,17 @@ init _ =
 type Msg
     = ClickedPhoto String
     | GotInitialModel (Result Http.Error Model)
+    | ClickedFolder FolderPath
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        ClickedFolder path ->
+            ( { model | root = toggleExpanded path model.root }
+            , Cmd.none
+            )
+
         ClickedPhoto url ->
             ( { model | selectedPhotoUrl = Just url }, Cmd.none )
 
@@ -81,6 +90,13 @@ update msg model =
 
         GotInitialModel (Err _) ->
             ( model, Cmd.none )
+
+
+viewPhoto : String -> Html Msg
+viewPhoto url =
+    div [ class "photo", onClick (ClickedPhoto url) ]
+        [ text url
+        ]
 
 
 viewSelectedPhoto : Photo -> Html Msg
@@ -104,16 +120,40 @@ viewRelatedPhoto url =
         []
 
 
-viewFolder : Folder -> Html Msg
-viewFolder (Folder folder) =
+viewFolder : FolderPath -> Folder -> Html Msg
+viewFolder path (Folder folder) =
     let
-        subfolders =
-            List.map viewFolder folder.subfolders
+        viewSubFolder : Int -> Folder -> Html Msg
+        viewSubFolder index subfolder =
+            viewFolder (appendIndex index path) subfolder
+
+        folderLabel =
+            label [ onClick (ClickedFolder path) ] [ text folder.name ]
     in
-    div [ class "folder" ]
-        [ label [] [ text folder.name ]
-        , div [ class "subfolders" ] subfolders
-        ]
+    if folder.expanded then
+        let
+            contents =
+                List.append
+                    (List.indexedMap viewSubFolder folder.subfolders)
+                    (List.map viewPhoto folder.photoUrls)
+        in
+        div [ class "folder expanded" ]
+            [ folderLabel
+            , div [ class "contents" ] contents
+            ]
+
+    else
+        div [ class "folder collapsed" ] [ folderLabel ]
+
+
+appendIndex : Int -> FolderPath -> FolderPath
+appendIndex index path =
+    case path of
+        End ->
+            SubFolder index End
+
+        SubFolder subfolderIndex remainingPath ->
+            SubFolder subfolderIndex (appendIndex index remainingPath)
 
 
 urlPrefix : String
@@ -140,10 +180,38 @@ view model =
     div [ class "content" ]
         [ div [ class "folders" ]
             [ h1 [] [ text "Folders" ]
-            , viewFolder model.root
+            , viewFolder End model.root
             ]
         , div [ class "selected-photo" ] [ selectedPhoto ]
         ]
+
+
+type FolderPath
+    = End
+    | SubFolder Int FolderPath
+
+
+toggleExpanded : FolderPath -> Folder -> Folder
+toggleExpanded path (Folder folder) =
+    case path of
+        End ->
+            Folder { folder | expanded = not folder.expanded }
+
+        SubFolder targetIndex remainingPath ->
+            let
+                subfolders : List Folder
+                subfolders =
+                    List.indexedMap transform folder.subfolders
+
+                transform : Int -> Folder -> Folder
+                transform currentIndex currentSubFolder =
+                    if currentIndex == targetIndex then
+                        toggleExpanded remainingPath currentSubFolder
+
+                    else
+                        currentSubFolder
+            in
+            Folder { folder | subfolders = subfolders }
 
 
 modelDecoder : Decoder Model
@@ -177,22 +245,25 @@ modelDecoder =
         , root =
             Folder
                 { name = "Photos"
+                , expanded = True
                 , photoUrls = []
                 , subfolders =
                     [ Folder
                         { name = "2016"
+                        , expanded = True
                         , photoUrls = [ "trevi", "coli" ]
                         , subfolders =
-                            [ Folder { name = "outdoors", photoUrls = [], subfolders = [] }
-                            , Folder { name = "indoors", photoUrls = [ "fresco" ], subfolders = [] }
+                            [ Folder { name = "outdoors", expanded = True, photoUrls = [], subfolders = [] }
+                            , Folder { name = "indoors", expanded = True, photoUrls = [ "fresco" ], subfolders = [] }
                             ]
                         }
                     , Folder
                         { name = "2017"
+                        , expanded = True
                         , photoUrls = []
                         , subfolders =
-                            [ Folder { name = "outdoors", photoUrls = [], subfolders = [] }
-                            , Folder { name = "indoors", photoUrls = [], subfolders = [] }
+                            [ Folder { name = "outdoors", expanded = True, photoUrls = [], subfolders = [] }
+                            , Folder { name = "indoors", expanded = True, photoUrls = [], subfolders = [] }
                             ]
                         }
                     ]
